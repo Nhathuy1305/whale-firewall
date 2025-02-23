@@ -1,6 +1,4 @@
 package whale_firewall
-<<<<<<< Updated upstream
-=======
 
 const (
 	dbCommands = `
@@ -16,4 +14,3 @@ PRAGMA journal_mode = WAL;
 
 //go:embed database/schema.sql
 var dbSchema string
->>>>>>> Stashed changes
