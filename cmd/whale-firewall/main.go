@@ -1,13 +1,19 @@
 package whale_firewall
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sys/unix"
 	"log"
 	"os"
+	"os/signal"
+	"path/filepath"
 	"runtime/debug"
+	"strings"
+	"syscall"
 	"time"
 )
 
@@ -58,6 +64,40 @@ func mainRetCode() int {
 	if err := unix.Uname(&uname); err != nil {
 		logger.Error("error getting kernel version", zap.Error(err))
 	} else {
-		kernelVer := parse
+		kernelVer := parseCStr(uname.Release[:])
+		var major, minor int
+		_, err := fmt.Fscanf(strings.NewReader(kernelVer), "%d.%d", &major, &minor)
+		if err != nil {
+			logger.Error("error parsing kernel version", zap.Error(err))
+			// minimum kernel version is around 5.10
+		} else if major < 5 || (major == 5 && minor < 10) {
+			logger.Sugar().Warnf("current kernel version %q is unsupported, 5.10 or greater "+
+				"is required; whale-firewall will probably not work correctly", kernelVer)
+		}
 	}
+
+	// create rule manager and drop unneeded privileges
+	dataDirAbs, err := filepath.Abs(*dataDir)
+	if err != nil {
+		logger.Error("error getting absolute path", zap.String("path", *dataDir), zap.Error(err))
+		return 1
+	}
+	sqliteFile := filepath.Join(dataDirAbs, dbFilename)
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	//r, err := whale
+}
+
+func parseCStr(cstr []byte) string {
+	p := make([]byte, 0, len(cstr))
+	for _, c := range cstr {
+		if c == 0x00 {
+			break
+		}
+		p = append(p, c)
+	}
+
+	return string(p)
 }
