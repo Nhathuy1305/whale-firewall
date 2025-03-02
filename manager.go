@@ -2,8 +2,10 @@ package whale_firewall
 
 import (
 	_ "embed"
+	"github.com/docker/docker/api/types"
 	"go.uber.org/zap"
 	"sync"
+	"whalefirewall/m/container"
 )
 
 const (
@@ -32,9 +34,19 @@ type RuleManager struct {
 	newDockerClient   dockerClientCreator
 	newFirewallClient firewallClientCreator
 
-	containerTracker *container
+	containerTracker *container.Tracker
+
+	createCh chan containerDetails
+	deleteCh chan string
+
+	db d
 }
 
 type dockerClientCreator func() (dockerClient, error)
 
 type firewallClientCreator func() (firewallClient, error)
+
+type containerDetails struct {
+	container types.ContainerJSON
+	isNew     bool
+}
