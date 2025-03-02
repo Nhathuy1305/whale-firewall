@@ -23,6 +23,7 @@ func main() {
 	os.Exit(mainRetCode())
 }
 
+// TODO
 func mainRetCode() int {
 	clearRules := flag.Bool("clear", false, "remove all firewall rules created by whale-firewall")
 	dataDir := flag.String("d", ".", "directory to store state in")

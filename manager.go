@@ -1,5 +1,11 @@
 package whale_firewall
 
+import (
+	_ "embed"
+	"go.uber.org/zap"
+	"sync"
+)
+
 const (
 	dbCommands = `
 PRAGMA foreign_keys = true;
@@ -14,3 +20,21 @@ PRAGMA journal_mode = WAL;
 
 //go:embed database/schema.sql
 var dbSchema string
+
+// TODO
+type RuleManager struct {
+	wg       sync.WaitGroup
+	stopping chan struct{}
+	done     chan struct{}
+
+	logger *zap.Logger
+
+	newDockerClient   dockerClientCreator
+	newFirewallClient firewallClientCreator
+
+	containerTracker *container
+}
+
+type dockerClientCreator func() (dockerClient, error)
+
+type firewallClientCreator func() (firewallClient, error)
