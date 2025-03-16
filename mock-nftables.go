@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/copystructure"
 	"go.uber.org/zap"
 	"sync"
+	"syscall"
 )
 
 const anonSetName = "__set%d"
@@ -144,6 +145,24 @@ func (m *mockFirewall) AddChain(c *nftables.Chain) *nftables.Chain {
 	}
 
 	return c
+}
+
+func (m *mockFirewall) DelChain(c *nftables.Chain) {
+	m.changed = true
+
+	chain, ok := m.chains[c.Name]
+	if !ok {
+		m.logger.Errorf("chain %q not found", c.Name)
+		m.flushErr = syscall.ENOENT
+		return
+	}
+
+	// delete rules so anonymous sets have a chance to get cleaned up
+	for _, rule := range chain.Rules {
+		m.delRule(rule, true)
+	}
+
+	delete(m.chains, c.Name)
 }
 
 func clone[T any](t T) T {
