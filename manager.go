@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"sync"
 	"whalefirewall/m/container"
+	"whalefirewall/m/database"
 )
 
 const (
@@ -23,7 +24,6 @@ PRAGMA journal_mode = WAL;
 //go:embed database/schema.sql
 var dbSchema string
 
-// TODO
 type RuleManager struct {
 	wg       sync.WaitGroup
 	stopping chan struct{}
@@ -39,7 +39,8 @@ type RuleManager struct {
 	createCh chan containerDetails
 	deleteCh chan string
 
-	db d
+	db        database.DB
+	dockerCli dockerClient
 }
 
 type dockerClientCreator func() (dockerClient, error)
